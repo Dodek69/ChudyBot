@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#This file provide a new docker entrypoint which would try to update dependency before run
 
 import os
 import subprocess
