@@ -19,7 +19,6 @@ try:
 except ImportError:
     pass
 
-
 class GIT(object):
     @classmethod
     def works(cls):
@@ -93,8 +92,7 @@ class PIP(object):
             return True
         except ImportError:
             return False
-
-    # noinspection PyTypeChecker
+   
     @classmethod
     def get_module_version(cls, mod):
         try:
@@ -118,8 +116,6 @@ class PIP(object):
         from pip.req import parse_requirements
         return list(parse_requirements(file))
 
-
-# Setup initial loggers
 
 tmpfile = tempfile.TemporaryFile('w+', encoding='utf8')
 log = logging.getLogger('launcher')
@@ -185,33 +181,20 @@ def bugger_off(msg="Press enter to continue . . .", code=1):
     sys.exit(code)
 
 
-# TODO: all of this
 def sanity_checks(optional=True):
     log.info("Starting sanity checks")
-    ## Required
-
-    # Make sure we're on Python 3.5+
+    
     req_ensure_py3()
-
-    # Fix windows encoding fuckery
     req_ensure_encoding()
-
-    # Make sure we're in a writeable env
-    req_ensure_env()
-
-    # Make our folders if needed
-    req_ensure_folders()
-
-    # For rewrite only
+    req_ensure_env()  
+    req_ensure_folders()  
     req_check_deps()
 
     log.info("Required checks passed.")
-
-    ## Optional
+   
     if not optional:
         return
-
-    # Check disk usage
+ 
     opt_check_disk_space()
 
     log.info("Optional checks passed.")
@@ -243,8 +226,7 @@ def req_ensure_py3():
             if pycom:
                 log.info("Python 3 found.  Launching bot...")
                 pyexec(pycom, 'run.py')
-
-                # I hope ^ works
+                
                 os.system('start cmd /k %s run.py' % pycom)
                 sys.exit(0)
 
@@ -269,8 +251,7 @@ def req_check_deps():
         if discord.version_info.major < 1:
             log.critical("This version of MusicBot requires a newer version of discord.py (1.0+). Your version is {0}. Try running update.py.".format(discord.__version__))
             bugger_off()
-    except ImportError:
-        # if we can't import discord.py, an error will be thrown later down the line anyway
+    except ImportError:        
         pass
 
 
@@ -281,8 +262,7 @@ def req_ensure_encoding():
         log.info("Setting console encoding to UTF-8")
 
         import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf8', line_buffering=True)
-        # only slightly evil    
+        sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf8', line_buffering=True)       
         sys.__stdout__ = sh.stream = sys.stdout
 
         if os.environ.get('PYCHARM_HOSTED', None) not in (None, '0'):
@@ -318,7 +298,7 @@ def req_ensure_env():
     if sys.platform.startswith('win'):
         log.info("Adding local bins/ folder to path")
         os.environ['PATH'] += ';' + os.path.abspath('bin/')
-        sys.path.append(os.path.abspath('bin/')) # might as well
+        sys.path.append(os.path.abspath('bin/')) 
 
 
 def req_ensure_folders():
@@ -329,16 +309,11 @@ def opt_check_disk_space(warnlimit_mb=200):
     if disk_usage('.').free < warnlimit_mb*1024*2:
         log.warning("Less than %sMB of free space remains on this device" % warnlimit_mb)
 
-
-#################################################
-
 def pyexec(pycom, *args, pycom2=None):
     pycom2 = pycom2 or pycom
     os.execlp(pycom, pycom2, *args)
 
-
-def main():
-    # TODO: *actual* argparsing
+def main():  
 
     if '--no-checks' not in sys.argv:
         sanity_checks()
@@ -348,7 +323,7 @@ def main():
     import asyncio
 
     if sys.platform == 'win32':
-        loop = asyncio.ProactorEventLoop()  # needed for subprocesses
+        loop = asyncio.ProactorEventLoop()  
         asyncio.set_event_loop(loop)
 
     tried_requirementstxt = False
@@ -358,8 +333,6 @@ def main():
     max_wait_time = 60
 
     while tryagain:
-        # Maybe I need to try to import stuff first, then actually import stuff
-        # It'd save me a lot of pain with all that awful exception type checking
 
         m = None
         try:
@@ -375,8 +348,7 @@ def main():
             log.exception("Syntax error (this is a bug, not your fault)")
             break
 
-        except ImportError:
-            # TODO: if error module is in pip or dpy requirements...
+        except ImportError:           
 
             if not tried_requirementstxt:
                 tried_requirementstxt = True
@@ -386,7 +358,7 @@ def main():
 
                 err = PIP.run_install('--upgrade -r requirements.txt')
 
-                if err: # TODO: add the specific error check back as not to always tell users to sudo it
+                if err: 
                     print()
                     log.critical("You may need to %s to install dependencies." %
                                  ['use sudo', 'run as admin'][sys.platform.startswith('win')])
@@ -416,8 +388,7 @@ def main():
 
         finally:
             if not m or not m.init_ok:
-                if any(sys.exc_info()):
-                    # How to log this without redundant messages...
+                if any(sys.exc_info()):                    
                     traceback.print_exc()
                 break
 

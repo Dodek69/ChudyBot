@@ -26,9 +26,6 @@ log = logging.getLogger(__name__)
 
 
 class PatchedBuff:
-    """
-        PatchedBuff monkey patches a readable object, allowing you to vary what the volume is as the song is playing.
-    """
 
     def __init__(self, buff, *, draw=False):
         self.buff = buff
@@ -53,7 +50,7 @@ class PatchedBuff:
             frame = self._frame_vol(frame, self.volume, maxv=2)
 
         if self.draw and not self.frame_count % self.frame_skip:
-            # these should be processed for every frame, but "overhead"
+            
             rms = audioop.rms(frame, 2)
             self.rmss.append(rms)
 
@@ -67,7 +64,7 @@ class PatchedBuff:
         if use_audioop:
             return audioop.mul(frame, 2, min(mult, maxv))
         else:
-            # ffmpeg returns s16le pcm frames.
+            
             frame_array = array('h', frame)
 
             for i in range(len(frame_array)):
@@ -87,11 +84,11 @@ class PatchedBuff:
 
 
 class MusicPlayerState(Enum):
-    STOPPED = 0  # When the player isn't playing anything
-    PLAYING = 1  # The player is actively playing music.
-    PAUSED = 2   # The player is paused on a song.
-    WAITING = 3  # The player has finished its song but is still downloading the next one
-    DEAD = 4     # The player has been killed.
+    STOPPED = 0  
+    PLAYING = 1  
+    PAUSED = 2   
+    WAITING = 3  
+    DEAD = 4     
 
     def __str__(self):
         return self.name
@@ -187,8 +184,8 @@ class MusicPlayer(EventEmitter, Serializable):
         self._current_entry = None
 
         if self._stderr_future.done() and self._stderr_future.exception():
-            # I'm not sure that this would ever not be done if it gets to this point
-            # unless ffmpeg is doing something highly questionable
+            
+            
             self.emit('error', player=self, entry=entry, ex=self._stderr_future.exception())
 
         if not self.bot.config.save_videos and entry:
@@ -205,7 +202,7 @@ class MusicPlayer(EventEmitter, Serializable):
                             log.debug('File deleted: {0}'.format(filename))
                             break
                         except PermissionError as e:
-                            if e.winerror == 32:  # File is in use
+                            if e.winerror == 32:  
                                 log.error('Can\'t delete file, it is currently in use: {0}').format(filename)
                         except FileNotFoundError:
                             log.debug('Could not find delete {} as it was not found. Skipping.'.format(filename), exc_info=True)
@@ -237,9 +234,7 @@ class MusicPlayer(EventEmitter, Serializable):
         self.loop.create_task(self._play(_continue=_continue))
 
     async def _play(self, _continue=False):
-        """
-            Plays the next entry from the playlist, or resumes playback of the current entry if paused.
-        """
+
         if self.is_paused and self._current_player:
             return self.resume()
 
@@ -254,17 +249,14 @@ class MusicPlayer(EventEmitter, Serializable):
                     log.warning("Failed to get entry, retrying", exc_info=True)
                     self.loop.call_later(0.1, self.play)
                     return
-
-                # If nothing left to play, transition to the stopped state.
+               
                 if not entry:
                     self.stop()
                     return
-
-                # In-case there was a player, kill it. RIP.
+              
                 self._kill_current_player()
 
-                boptions = "-nostdin"
-                # aoptions = "-vn -b:a 192k"
+                boptions = "-nostdin"              
                 if isinstance(entry, URLPlaylistEntry):
                     aoptions = entry.aoptions
                 else:
@@ -285,8 +277,7 @@ class MusicPlayer(EventEmitter, Serializable):
                 self.voice_client.play(source, after=self._playback_finished)
 
                 self._current_player = self.voice_client
-
-                # I need to add ytdl hooks
+              
                 self.state = MusicPlayerState.PLAYING
                 self._current_entry = entry
 
@@ -326,11 +317,7 @@ class MusicPlayer(EventEmitter, Serializable):
 
         current_entry_data = data['current_entry']
         if current_entry_data['entry']:
-            player.playlist.entries.appendleft(current_entry_data['entry'])
-            # TODO: progress stuff
-            # how do I even do this
-            # this would have to be in the entry class right?
-            # some sort of progress indicator to skip ahead with ffmpeg (however that works, reading and ignoring frames?)
+            player.playlist.entries.appendleft(current_entry_data['entry'])           
 
         return player
 
@@ -366,12 +353,6 @@ class MusicPlayer(EventEmitter, Serializable):
     def progress(self):
         if self._current_player:
             return round(self._current_player._player.loops * 0.02)
-            # TODO: Properly implement this
-            #       Correct calculation should be bytes_read/192k
-            #       192k AKA sampleRate * (bitDepth / 8) * channelCount
-            #       Change frame_count to bytes_read in the PatchedBuff
-
-# TODO: I need to add a check for if the eventloop is closed
 
 def filter_stderr(popen:subprocess.Popen, future:asyncio.Future):
     last_ex = None
@@ -390,7 +371,7 @@ def filter_stderr(popen:subprocess.Popen, future:asyncio.Future):
                 last_ex = e
 
             except FFmpegWarning:
-                pass # useless message
+                pass 
         else:
             break
 
@@ -404,11 +385,9 @@ def check_stderr(data:bytes):
         data = data.decode('utf8')
     except:
         log.ffmpeg("Unknown error decoding message from ffmpeg", exc_info=True)
-        return True # fuck it
+        return True 
 
-    # log.ffmpeg("Decoded data from ffmpeg: {}".format(data))
 
-    # TODO: Regex
     warnings = [
         "Header missing",
         "Estimating duration from birate, this may be inaccurate",
@@ -419,7 +398,7 @@ def check_stderr(data:bytes):
         "decode_band_types: Input buffer exhausted before END element found"
     ]
     errors = [
-        "Invalid data found when processing input", # need to regex this properly, its both a warning and an error
+        "Invalid data found when processing input", 
     ]
 
     if any(msg in data for msg in warnings):
@@ -429,23 +408,3 @@ def check_stderr(data:bytes):
         raise FFmpegError(data)
 
     return True
-
-
-# if redistributing ffmpeg is an issue, it can be downloaded from here:
-#  - http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.7z
-#  - http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.7z
-#
-# Extracting bin/ffmpeg.exe, bin/ffplay.exe, and bin/ffprobe.exe should be fine
-# However, the files are in 7z format so meh
-# I don't know if we can even do this for the user, at most we open it in the browser
-# I can't imagine the user is so incompetent that they can't pull 3 files out of it...
-# ...
-# ...right?
-
-# Get duration with ffprobe
-#   ffprobe.exe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal filename.mp3
-# This is also how I fix the format checking issue for now
-# ffprobe -v quiet -print_format json -show_format stream
-
-# Normalization filter
-# -af dynaudnorm

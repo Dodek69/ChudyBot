@@ -10,7 +10,7 @@ class Json:
         self.data = self.parse()
 
     def parse(self):
-        """Parse the file as JSON"""
+
         with open(self.file, encoding='utf-8') as data:
             try:
                 parsed = json.load(data)
@@ -20,7 +20,7 @@ class Json:
         return parsed
 
     def get(self, item, fallback=None):
-        """Gets an item from a JSON file"""
+
         try:
             data = self.data[item]
         except KeyError:

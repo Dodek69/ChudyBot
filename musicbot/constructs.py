@@ -54,7 +54,7 @@ class Response:
         else:
             return self._content
 
-# Alright this is going to take some actual thinking through
+
 class AnimatedResponse(Response):
     def __init__(self, content, *sequence, delete_after=0):
         super().__init__(content, delete_after=delete_after)
@@ -71,28 +71,28 @@ class Serializer(json.JSONEncoder):
     @classmethod
     def deserialize(cls, data):
         if all(x in data for x in Serializable._class_signature):
-            # log.debug("Deserialization requested for %s", data)
+            
             factory = pydoc.locate(data['__module__'] + '.' + data['__class__'])
-            # log.debug("Found object %s", factory)
+            
             if factory and issubclass(factory, Serializable):
-                # log.debug("Deserializing %s object", factory)
+                
                 return factory._deserialize(data['data'], **cls._get_vars(factory._deserialize))
 
         return data
 
     @classmethod
     def _get_vars(cls, func):
-        # log.debug("Getting vars for %s", func)
+        
         params = inspect.signature(func).parameters.copy()
         args = {}
-        # log.debug("Got %s", params)
+        
 
         for name, param in params.items():
-            # log.debug("Checking arg %s, type %s", name, param.kind)
+            
             if param.kind is param.POSITIONAL_OR_KEYWORD and param.default is None:
-                # log.debug("Using var %s", name)
+                
                 args[name] = _get_variable(name)
-                # log.debug("Collected var for arg '%s': %s", name, args[name])
+                
 
         return args
 
@@ -107,7 +107,7 @@ class Serializable:
             'data': data
         }
 
-    # Perhaps convert this into some sort of decorator
+    
     @staticmethod
     def _bad(arg):
         raise TypeError('Argument "%s" must not be None' % arg)

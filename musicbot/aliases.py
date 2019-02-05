@@ -13,8 +13,7 @@ class Aliases:
         self.aliases_file = Path(aliases_file)
         self.aliases_seed = AliasesDefault.aliases_seed
         self.aliases = AliasesDefault.aliases
-
-        # find aliases file
+   
         if not self.aliases_file.is_file():
             example_aliases = Path('config/example_aliases.json')
             if example_aliases.is_file():
@@ -26,8 +25,7 @@ class Aliases:
                     "Grab the files back from the archive or remake them yourself and copy paste the content "
                     "from the repo. Stop removing important files!"
                 )
-
-        # parse json
+   
         with self.aliases_file.open() as f:
             try:
                 self.aliases_seed = json.load(f)
@@ -36,8 +34,7 @@ class Aliases:
                     "Failed to parse aliases file.",
                     "Ensure your {} is a valid json file and restart the bot.".format(str(self.aliases_file))
                 )
-
-        # construct
+  
         for cmd, aliases in self.aliases_seed.items():
             if not isinstance(cmd, str) or not isinstance(aliases, list):
                 raise HelpfulError(
@@ -47,11 +44,7 @@ class Aliases:
             self.aliases.update({alias.lower(): cmd.lower() for alias in aliases})
     
     def get(self, arg):
-        """
-        Return cmd name (string) that given arg points.
-        If arg is not registered as alias, empty string will be returned.
-        supposed to be called from bot.on_message
-        """
+
         ret = self.aliases.get(arg)
         return ret if ret else ''
             

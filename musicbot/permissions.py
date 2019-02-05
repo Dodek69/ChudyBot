@@ -7,12 +7,8 @@ import discord
 
 log = logging.getLogger(__name__)
 
-# PermissionDefaults class define the strictest value of each permissions
-# Permissive class define the permissive value of each permissions
-
 class PermissionsDefaults:
     perms_file = 'config/permissions.ini'
-    #now it's unpermissive by default for most
     CommandWhiteList = set()
     CommandBlackList = set()
     IgnoreNonVoice = set()
@@ -81,8 +77,6 @@ class Permissions:
             
         else:
             log.info("[Owner (auto)] section not found, falling back to permissive default")
-            # Create a fake section to fallback onto the default permissive values to grant to the owner
-            # noinspection PyTypeChecker
             owner_group = PermissionGroup("Owner (auto)", configparser.SectionProxy(self.config, "Owner (auto)"), fallback=Permissive)
             
         if hasattr(grant_all, '__iter__'):
@@ -103,20 +97,14 @@ class Permissions:
             self.config.write(f)
 
     def for_user(self, user):
-        """
-        Returns the first PermissionGroup a user belongs to
-        :param user: A discord User or Member object
-        """
 
         for group in self.groups:
             if user.id in group.user_list:
                 return group
-
-        # The only way I could search for roles is if I add a `server=None` param and pass that too
+     
         if type(user) == discord.User:
             return self.default_group
-
-        # We loop again so that we don't return a role based group before we find an assigned one
+      
         for group in self.groups:
             for role in user.roles:
                 if role.id in group.granted_to_roles:
@@ -126,8 +114,7 @@ class Permissions:
 
     def create_group(self, name, **kwargs):
         self.config.read_dict({name:kwargs})
-        self.groups.add(PermissionGroup(name, self.config[name]))
-        # TODO: Test this
+        self.groups.add(PermissionGroup(name, self.config[name]))      
 
 
 class PermissionGroup:

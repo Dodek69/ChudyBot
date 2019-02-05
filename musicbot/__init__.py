@@ -83,15 +83,6 @@ _func_prototype = "def {logger_func_name}(self, message, *args, **kwargs):\n" \
                   "        self._log({levelname}, message, args, **kwargs)"
 
 def _add_logger_level(levelname, level, *, func_name = None):
-    """
-
-    :type levelname: str
-        The reference name of the level, e.g. DEBUG, WARNING, etc
-    :type level: int
-        Numeric logging level
-    :type func_name: str
-        The name of the logger function to log to a level, e.g. "info" for log.info(...)
-    """
 
     func_name = func_name or levelname.lower()
 

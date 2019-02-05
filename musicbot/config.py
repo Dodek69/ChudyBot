@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class Config:
-    # noinspection PyUnresolvedReferences
+    
     def __init__(self, config_file):
         self.config_file = config_file
         self.find_config()
@@ -89,7 +89,7 @@ class Config:
         self.find_autoplaylist()
 
     def get_all_keys(self, conf):
-        """Returns all config keys as a list"""
+
         sects = dict(conf.items())
         keys = []
         for k in sects:
@@ -106,12 +106,10 @@ class Config:
                 return
             ex_keys = self.get_all_keys(exconf)
             if set(usr_keys) != set(ex_keys):
-                self.missing_keys = set(ex_keys) - set(usr_keys)  # to raise this as an issue in bot.py later
+                self.missing_keys = set(ex_keys) - set(usr_keys)  
 
     def run_checks(self):
-        """
-        Validation logic for bot settings.
-        """
+
         if self.i18n_file != ConfigDefaults.i18n_file and not os.path.isfile(self.i18n_file):
             log.warning('i18n file does not exist. Trying to fallback to {0}.'.format(ConfigDefaults.i18n_file))
             self.i18n_file = ConfigDefaults.i18n_file
@@ -130,7 +128,7 @@ class Config:
             raise HelpfulError(
                 "No bot token was specified in the config.",
                 "As of v1.9.6_1, you are required to use a Discord bot account. "
-                "See https://github.com/Just-Some-Bots/MusicBot/wiki/FAQ for info.",
+                "Contact Dodek69 for more info there https://github.com/Dodek69/ChudyBot/issues/new",
                 preface=self._confpreface
             )
 
@@ -153,7 +151,7 @@ class Config:
                 self.owner_id = int(self.owner_id)
 
             elif self.owner_id == 'auto':
-                pass # defer to async check
+                pass 
 
             else:
                 self.owner_id = None
@@ -210,8 +208,8 @@ class Config:
             open(path, 'a').close()
             log.warning('Creating %s' % path)
 
-    # TODO: Add save function for future editing of options with commands
-    #       Maybe add warnings about fields missing from the config file
+    
+    
 
     async def async_validate(self, bot):
         log.debug("Validating options...")
@@ -268,15 +266,15 @@ class Config:
         if not config.read(self.config_file, encoding='utf-8'):
             c = configparser.ConfigParser()
             try:
-                # load the config again and check to see if the user edited that one
+                
                 c.read(self.config_file, encoding='utf-8')
 
-                if not int(c.get('Permissions', 'OwnerID', fallback=0)): # jake pls no flame
+                if not int(c.get('Permissions', 'OwnerID', fallback=0)): 
                     print(flush=True)
                     log.critical("Please configure config/options.ini and re-run the bot.")
                     sys.exit(1)
 
-            except ValueError: # Config id value was changed but its not valid
+            except ValueError: 
                 raise HelpfulError(
                     'Invalid value "{}" for OwnerID, config cannot be loaded. '.format(
                         c.get('Permissions', 'OwnerID', fallback=None)
@@ -343,15 +341,15 @@ class ConfigDefaults:
 
     options_file = 'config/options.ini'
     blacklist_file = 'config/blacklist.txt'
-    auto_playlist_file = 'config/autoplaylist.txt'  # this will change when I add playlists
+    auto_playlist_file = 'config/autoplaylist.txt'  
     i18n_file = 'config/i18n/en.json'
 
 setattr(ConfigDefaults, codecs.decode(b'ZW1haWw=', '\x62\x61\x73\x65\x36\x34').decode('ascii'), None)
 setattr(ConfigDefaults, codecs.decode(b'cGFzc3dvcmQ=', '\x62\x61\x73\x65\x36\x34').decode('ascii'), None)
 setattr(ConfigDefaults, codecs.decode(b'dG9rZW4=', '\x62\x61\x73\x65\x36\x34').decode('ascii'), None)
 
-# These two are going to be wrappers for the id lists, with add/remove/load/save functions
-# and id/object conversion so types aren't an issue
+
+
 class Blacklist:
     pass
 

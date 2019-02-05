@@ -39,17 +39,14 @@ class BasePlaylistEntry(Serializable):
         raise NotImplementedError
 
     def get_ready_future(self):
-        """
-        Returns a future that will fire when the song is ready to be played. The future will either fire with the result (being the entry) or an exception
-        as to why the song download failed.
-        """
+
         future = asyncio.Future()
         if self.is_downloaded:
-            # In the event that we're downloaded, we're already ready for playback.
+            
             future.set_result(self)
 
         else:
-            # If we request a ready future, let's ensure that it'll actually resolve at one point.
+            
             self._waiting_futures.append(future)
             asyncio.ensure_future(self._download())
 
@@ -57,9 +54,7 @@ class BasePlaylistEntry(Serializable):
         return future
 
     def _for_each_future(self, cb):
-        """
-            Calls `cb` for each future that is not cancelled. Absorbs and logs any errors that may have occurred.
-        """
+
         futures = self._waiting_futures
         self._waiting_futures = []
 
@@ -119,7 +114,7 @@ class URLPlaylistEntry(BasePlaylistEntry):
         assert playlist is not None, cls._bad('playlist')
 
         try:
-            # TODO: version check
+            
             url = data['url']
             title = data['title']
             duration = data['duration']
@@ -128,15 +123,15 @@ class URLPlaylistEntry(BasePlaylistEntry):
             expected_filename = data['expected_filename']
             meta = {}
 
-            # TODO: Better [name] fallbacks
+            
             if 'channel' in data['meta']:
-                # int() it because persistent queue from pre-rewrite days saved ids as strings
+                
                 meta['channel'] = playlist.bot.get_channel(int(data['meta']['channel']['id']))
                 if not meta['channel']:
                     log.warning('Cannot find channel in an entry loaded from persistent queue. Chennel id: {}'.format(data['meta']['channel']['id']))
                     meta.pop('channel')
                 elif 'author' in data['meta']:
-                    # int() it because persistent queue from pre-rewrite days saved ids as strings
+                    
                     meta['author'] = meta['channel'].guild.get_member(int(data['meta']['author']['id']))
                     if not meta['author']:
                         log.warning('Cannot find author in an entry loaded from persistent queue. Author id: {}'.format(data['meta']['author']['id']))
@@ -149,21 +144,21 @@ class URLPlaylistEntry(BasePlaylistEntry):
         except Exception as e:
             log.error("Could not load {}".format(cls.__name__), exc_info=e)
 
-    # noinspection PyTypeChecker
+    
     async def _download(self):
         if self._is_downloading:
             return
 
         self._is_downloading = True
         try:
-            # Ensure the folder that we're going to move into exists.
+            
             if not os.path.exists(self.download_folder):
                 os.makedirs(self.download_folder)
 
-            # self.expected_filename: audio_cache\youtube-9R8aSKwTEMg-NOMA_-_Brain_Power.m4a
+            
             extractor = os.path.basename(self.expected_filename).split('-')[0]
 
-            # the generic extractor requires special handling
+            
             if extractor == 'generic':
                 flistdir = [f.rsplit('-', 1)[0] for f in os.listdir(self.download_folder)]
                 expected_fname_noex, fname_ex = os.path.basename(self.expected_filename).rsplit('.', 1)
@@ -179,18 +174,18 @@ class URLPlaylistEntry(BasePlaylistEntry):
                         os.listdir(self.download_folder)[flistdir.index(expected_fname_noex)]
                     )
 
-                    # print("Resolved %s to %s" % (self.expected_filename, lfile))
+                    
                     lsize = os.path.getsize(lfile)
-                    # print("Remote size: %s Local size: %s" % (rsize, lsize))
+                    
 
                     if lsize != rsize:
                         await self._really_download(hash=True)
                     else:
-                        # print("[Download] Cached:", self.url)
+                        
                         self.filename = lfile
 
                 else:
-                    # print("File not found in cache (%s)" % expected_fname_noex)
+                    
                     await self._really_download(hash=True)
 
             else:
@@ -199,8 +194,8 @@ class URLPlaylistEntry(BasePlaylistEntry):
                 expected_fname_base = os.path.basename(self.expected_filename)
                 expected_fname_noex = expected_fname_base.rsplit('.', 1)[0]
 
-                # idk wtf this is but its probably legacy code
-                # or i have youtube to blame for changing shit again
+                
+                
 
                 if expected_fname_base in ldir:
                     self.filename = os.path.join(self.download_folder, expected_fname_base)
@@ -229,7 +224,7 @@ class URLPlaylistEntry(BasePlaylistEntry):
 
             self.aoptions = aoptions
 
-            # Trigger ready callbacks.
+            
             self._for_each_future(lambda future: future.set_result(self))
 
         except Exception as e:
@@ -271,7 +266,7 @@ class URLPlaylistEntry(BasePlaylistEntry):
         cmd = '"' + self.get('ffmpeg') + '" -i "' + input_file + '" -af "volumedetect" -f null /dev/null'
         output = await self.run_command(cmd)
         output = output.decode("utf-8")
-        # print('----', output)
+        
         mean_volume_matches = re.findall(r"mean_volume: ([\-\d\.]+) dB", output)
         if (mean_volume_matches):
             mean_volume = float(mean_volume_matches[0])
@@ -287,7 +282,7 @@ class URLPlaylistEntry(BasePlaylistEntry):
         log.debug('Calculated mean volume as {0}'.format(mean_volume))
         return mean_volume, max_volume
 
-    # noinspection PyShadowingBuiltins
+    
     async def _really_download(self, *, hash=False):
         log.info("Download started: {}".format(self.url))
 
@@ -304,19 +299,19 @@ class URLPlaylistEntry(BasePlaylistEntry):
         if result is None:
             log.critical("YTDL has failed, everyone panic")
             raise ExtractionError("ytdl broke and hell if I know why")
-            # What the fuck do I do now?
+            
 
         self.filename = unhashed_fname = self.playlist.downloader.ytdl.prepare_filename(result)
 
         if hash:
-            # insert the 8 last characters of the file hash to the file name to ensure uniqueness
+            
             self.filename = md5sum(unhashed_fname, 8).join('-.').join(unhashed_fname.rsplit('.', 1))
 
             if os.path.isfile(self.filename):
-                # Oh bother it was actually there.
+                
                 os.unlink(unhashed_fname)
             else:
-                # Move the temporary file to it's final location.
+                
                 os.rename(unhashed_fname, self.filename)
 
 
@@ -355,14 +350,14 @@ class StreamPlaylistEntry(BasePlaylistEntry):
         assert playlist is not None, cls._bad('playlist')
 
         try:
-            # TODO: version check
+            
             url = data['url']
             title = data['title']
             destination = data['destination']
             filename = data['filename']
             meta = {}
 
-            # TODO: Better [name] fallbacks
+            
             if 'channel' in data['meta']:
                 ch = playlist.bot.get_channel(data['meta']['channel']['id'])
                 meta['channel'] = ch or data['meta']['channel']['name']
@@ -378,7 +373,7 @@ class StreamPlaylistEntry(BasePlaylistEntry):
         except Exception as e:
             log.error("Could not load {}".format(cls.__name__), exc_info=e)
 
-    # noinspection PyMethodOverriding
+    
     async def _download(self, *, fallback=False):
         self._is_downloading = True
 
@@ -393,8 +388,6 @@ class StreamPlaylistEntry(BasePlaylistEntry):
             raise ExtractionError(e)
         else:
             self.filename = result['url']
-            # I might need some sort of events or hooks or shit
-            # for when ffmpeg inevitebly fucks up and i have to restart
-            # although maybe that should be at a slightly lower level
+               
         finally:
             self._is_downloading = False
