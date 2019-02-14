@@ -11,24 +11,24 @@ def y_n(q):
         elif ri.lower() in ['no', 'n']: return False
 
 def update_deps():
-    print("Attempting to update dependencies...")
+    print("Trying to update dependencies...")
 
     try:
         subprocess.check_call('"{}" -m pip install -U -r requirements.txt'.format(sys.executable), shell=True)
     except subprocess.CalledProcessError:
-        raise OSError("Could not update dependencies. You will need to run '\"{0}\" -m pip install -U -r requirements.txt' yourself.".format(sys.executable))
+        raise OSError("\nCould not update dependencies. You will need to run '\"{0}\" -m pip install -U -r requirements.txt' yourself.\n".format(sys.executable))
 
 def finalize():
     try:
         from musicbot.constants import VERSION
-        print('The current Bot version is {0}.'.format(VERSION))
+        print('\nThe current ChudyBot version is {0}.\n'.format(VERSION))
     except Exception:
-        print('There was a problem fetching your current bot version. The installation may not have completed correctly.')
+        print('\nThere was a problem fetching your current bot version. The installation may not have completed correctly.\n')
 
-    print("Done!")
+    print("\nDone!\n")
 
 def main():
-    print('Starting...')
+    print('Starting update...')
 
     update_deps()
     finalize()
